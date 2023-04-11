@@ -6,9 +6,11 @@ package no.hvl.dat110.chordoperations;
 import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
+import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 
+import no.hvl.dat110.util.Hash;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -150,27 +152,69 @@ public class ChordProtocols {
 		
 		logger.info("Update of successor and predecessor completed...bye!");
 	}
-	
+
 	public void fixFingerTable() {
-		
+
 		try {
 			logger.info("Fixing the FingerTable for the Node: "+ chordnode.getNodeName());
-	
+
 			// get the finger table from the chordnode (list object)
-			
+
 			// ensure to clear the current finger table
-			
+
 			// get the address size from the Hash class. This is the modulus and our address space (2^mbit = modulus)
-			
+
 			// get the number of bits from the Hash class. Number of bits = size of the finger table
-			
-			// iterate over the number of bits			
-			
+
+			// iterate over the number of bits
+
 			// compute: k = succ(n + 2^(i)) mod 2^mbit
-			
+
 			// then: use chordnode to find the successor of k. (i.e., succnode = chordnode.findSuccessor(k))
-			
+
 			// check that succnode is not null, then add it to the finger table
+
+
+
+			List<NodeInterface> nodeInterface = chordnode.getFingerTable();
+			chordnode.getFingerTable().clear();
+			BigInteger addressize = Hash.addressSize();
+			int hashSize = Hash.bitSize();
+			for( int i = 0; i < hashSize; i++) {
+				BigInteger sucID = new BigInteger("2");
+				sucID = sucID.pow(i);
+
+				BigInteger sucNodeMod = (chordnode.getNodeID().add(sucID)).mod(addressize);
+
+				NodeInterface succNode = null;
+
+
+				try	{
+					succNode = chordnode.findSuccessor(sucNodeMod);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+
+
+
+
+				if(succNode != null) {
+					try {
+						nodeInterface.set(i,succNode);
+
+					} catch (IndexOutOfBoundsException e) {
+						nodeInterface.add(i,succNode);
+					}
+
+				}
+
+
+			}
+
+
+
+
+
 
 		} catch (RemoteException e) {
 			//

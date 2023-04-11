@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -65,6 +66,21 @@ public class FileManager {
 		// hash the replica
 		
 		// store the hash in the replicafiles array.
+		for (int i = 0; i < numReplicas; i++ ) {
+
+			if (filename.endsWith(String.valueOf(i-1))) {
+				filename = filename.substring(0, filename.length()-1);
+			}
+			filename += i;
+
+			System.out.println(filename);
+
+
+
+			hash = Hash.hashOf(filename);
+			System.out.println(hash);
+			replicafiles[i] = hash;
+		}
 	}
 	
     /**
@@ -97,6 +113,16 @@ public class FileManager {
     	// call the saveFileContent() on the successor and set isPrimary=true if logic above is true otherwise set isPrimary=false
     	
     	// increment counter
+
+		createReplicaFiles();
+		for (int i = 0; i < numReplicas; i++) {
+			BigInteger replica = replicafiles[i];
+			NodeInterface successor = chordnode.findSuccessor(replica);
+			successor.addKey(replica);
+			successor.saveFileContent(filename, replica, bytesOfFile, i == index);
+			counter++;
+		}
+
 		return counter;
     }
 	
@@ -122,6 +148,13 @@ public class FileManager {
 		// get the metadata (Message) of the replica from the successor (i.e., active peer) of the file
 		
 		// save the metadata in the set activeNodesforFile.
+		createReplicaFiles();
+		for (int i = 0; i < numReplicas; i++) {
+			BigInteger replica = replicafiles[i];
+			NodeInterface succ = chordnode.findSuccessor(replica);
+			Message message = succ.getFilesMetadata(replica);
+			activeNodesforFile.add(message);
+		}
 		
 		return activeNodesforFile;
 	}
@@ -141,6 +174,11 @@ public class FileManager {
 		// use the primaryServer boolean variable contained in the Message class to check if it is the primary or not
 		
 		// return the primary when found (i.e., use Util.getProcessStub to get the stub and return it)
+		for (Message m: activeNodesforFile) {
+			if (m.isPrimaryServer()) {
+				return Util.getProcessStub(m.getNodeName(), m.getPort());
+			}
+		}
 		
 		return null; 
 	}
